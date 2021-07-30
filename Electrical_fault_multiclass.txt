@@ -1,0 +1,367 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "8085bfa7-cacd-4a6a-bdca-9e316c11ad0b",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import numpy as np\n",
+    "import pandas as pd\n",
+    "import seaborn as sns\n",
+    "import matplotlib.pyplot as plt"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "77119000-4181-497e-a748-4988bf93faa6",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "data = pd.read_csv('classData.csv')\n",
+    "data"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "2178514f-777a-42c2-96d6-c6046c3810b7",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "data_null = data.isnull().sum()\n",
+    "data_null"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "5d44a121-0602-4b3b-b7d6-8709d4e84532",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "prueba = data.loc[:,['G','C','B','A']]\n",
+    "hola = prueba.sample(10)\n",
+    "print(prueba.iloc[0:1])\n",
+    "prueba.iloc[0:1,3]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "ab5906bf-c73e-4840-8b34-b5a6b803c350",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def clasifier_fault(data):\n",
+    "    target = []\n",
+    "    for i in range(0,len(data)):\n",
+    "        c = data.iloc[i:int(i+1)].to_numpy().flatten()\n",
+    "        if c[0] == 0 and c[1] == 0 and c[2]==0 and c[3]==0:\n",
+    "            target.append(0)\n",
+    "        elif c[0] == 0 and c[1] == 1 and c[2]==1 and c[3]==0: \n",
+    "             target.append(1)\n",
+    "        elif c[0] == 0 and c[1] == 1 and c[2]==1 and c[3]==1: \n",
+    "             target.append(2)\n",
+    "        elif c[0] == 1 and c[1] == 0 and c[2]==0 and c[3]==1: \n",
+    "             target.append(3)\n",
+    "        elif c[0] == 1 and c[1] == 0 and c[2]==1 and c[3]==1: \n",
+    "             target.append(4)\n",
+    "        elif c[0] == 1 and c[1] == 1 and c[2]==1 and c[3]==1: \n",
+    "             target.append(5)\n",
+    "    return target"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "52452d5d-5b1f-4be7-ae9c-fe74e862e527",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df = data.loc[:,['G','C','B','A']]\n",
+    "len(df)\n",
+    "target = clasifier_fault(df)\n",
+    "data['target'] = target\n",
+    "data"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "ad870b7c-511d-4c99-b111-c9ebc2ac2211",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def falla(data):\n",
+    "    target = []\n",
+    "    if data == 0:\n",
+    "        target.append('No hay falla')\n",
+    "    elif data == 1:\n",
+    "        target.append('Falla entre fase A y fase B')\n",
+    "    elif data == 2:\n",
+    "        target.append('Falla en todas las fases')\n",
+    "    elif data == 3:\n",
+    "        target.append('Falla entre fase A y tierra')\n",
+    "    elif data == 4:\n",
+    "        target.append('Falla entre fase A,B y tierra')\n",
+    "    elif data == 5:\n",
+    "        target.append('Falla entre todas las fases y tierra')\n",
+    "    return target"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "466dc3d7-5dd4-4b88-a080-2fa5d3578261",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "data['falla'] = data.target.apply(lambda x: falla(x))\n",
+    "data['falla'] = data.falla.apply(lambda x: x[0])\n",
+    "data"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "972cb276-fef6-4d01-9c88-f087b03087f6",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "data_bal = data.loc[:,['Ia','target']].groupby(['target']).count()\n",
+    "data_bal = data_bal.apply(lambda x: x*100/data.shape[0])\n",
+    "data_bal"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "955acf0e-2b27-48cc-a6fe-98e387eb7253",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "data_bal = data.loc[:,['Ia','falla']].groupby(['falla']).count()\n",
+    "data_bal = data_bal.apply(lambda x: x*100/data.shape[0])\n",
+    "data_bal"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "a6dc937c-9c3f-4c1b-8178-2574cf3f624f",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "X = data.loc[:,['Ia','Ib','Ic','Va','Vb','Vc']]\n",
+    "y = data.target"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "97a10d3d-4cf3-4c14-b34e-74eb7458fd36",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from sklearn.model_selection import train_test_split\n",
+    "X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_state=0)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "63cc17ba-cce2-49d8-b144-2f6feaed1c56",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from sklearn.preprocessing import StandardScaler\n",
+    "scaler = StandardScaler()\n",
+    "X_train_scaler = scaler.fit_transform(X_train)\n",
+    "X_test_scaler = scaler.fit_transform(X_test)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "80405f91-04a1-470d-84c6-dbd794155888",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from sklearn.neighbors import KNeighborsClassifier"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "a80c1e09-9f6d-489d-91ce-5b4953c23aa4",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "knn = KNeighborsClassifier()\n",
+    "knn.fit(X_train, y_train)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "284a99b2-6e72-4402-b7ab-76cbfd9e694f",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "y_pred_train = knn.predict(X_train)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "a7d65ea6-628c-4ccf-a81a-6838bed96554",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from sklearn.metrics import accuracy_score,confusion_matrix\n",
+    "print(accuracy_score(y_train, y_pred_train).round(2))\n",
+    "cm = confusion_matrix(y_train, y_pred_train)\n",
+    "sns.heatmap(cm, annot=True,fmt='d')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "38c109e6-1c2f-4f72-8d2f-4871e7f80408",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "y_pred_test = knn.predict(X_test)\n",
+    "print(accuracy_score(y_test, y_pred_test).round(2))\n",
+    "cm = confusion_matrix(y_test, y_pred_test)\n",
+    "sns.heatmap(cm, annot=True,fmt='d')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "c581ef9c-a417-474c-bf76-9c60912f3c11",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "data['target_binaria'] = data.target.apply(lambda x: x if x == 0 else 1)\n",
+    "data"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "83a8548f-c9a1-4e99-b092-3073769eb69e",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "data_bal = data.loc[:,['Ia','target_binaria']].groupby(['target_binaria']).count()\n",
+    "data_bal = data_bal.apply(lambda x: x*100/data.shape[0])\n",
+    "data_bal"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "85f839cf-63dc-43d8-8997-01e6bccfb896",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "X = data.loc[:,['Ia','Ib','Ic','Va','Vb','Vc']]\n",
+    "y = data.target_binaria"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "1a5429fd-dade-4136-a9e6-7aa17c805be8",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_state=0)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "efb0fd08-5b16-478a-9217-ab66cbb7462d",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "scaler = StandardScaler()\n",
+    "X_train_scaler = scaler.fit_transform(X_train)\n",
+    "X_test_scaler = scaler.fit_transform(X_test)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "796672e5-ce94-4975-b495-8e52ee6171ca",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "knn = KNeighborsClassifier()\n",
+    "knn.fit(X_train, y_train)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "d482fd96-bc4f-4ea3-b8f9-8edea78e76ff",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "y_pred_train = knn.predict(X_train)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "886610dc-4af3-46fc-8654-f70f9b69c514",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "print(accuracy_score(y_train, y_pred_train))\n",
+    "cm = confusion_matrix(y_train, y_pred_train)\n",
+    "sns.heatmap(cm, annot=True,fmt='d')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "6afb2b73-e494-4e38-a77d-3b36ea440dbf",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "y_pred_test = knn.predict(X_test)\n",
+    "print(accuracy_score(y_test, y_pred_test))\n",
+    "cm = confusion_matrix(y_test, y_pred_test)\n",
+    "sns.heatmap(cm, annot=True,fmt='d')"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.8.5"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}
